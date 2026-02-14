@@ -26,9 +26,9 @@
       --blockA:#ff8fbe;
       --blockB:#ff7fb3;
 
-      /* NUEVO: estilos para “NO” */
-      --noA:#ff2d55;   /* rojo romántico */
-      --noB:#b5003a;   /* vino */
+      /* estilos para “NO” */
+      --noA:#ff2d55;
+      --noB:#b5003a;
       --noText:#fff0f7;
 
       --shadow: 0 34px 110px rgba(180,0,90,.45);
@@ -247,7 +247,7 @@
     }
     .quote p{ margin:8px 0 0 0; line-height:1.55; }
 
-    /* NUEVO: estilo resaltado cuando ella dice NO */
+    /* estilo resaltado cuando ella dice NO */
     .quote.noMode{
       background: linear-gradient(180deg, var(--noA), var(--noB));
       color: var(--noText);
@@ -308,7 +308,6 @@
     }
     .btn-no:hover{ transform: translateY(-1px); filter: brightness(1.03); }
 
-    /* EXTRA: resaltar el botón Sí después de varios “No” */
     .btn-yes.glow{
       box-shadow:
         0 18px 40px rgba(255, 0, 90, .28),
@@ -426,11 +425,37 @@
       padding: 8px 10px;
     }
 
+    /* ✅ CAMBIO PRINCIPAL: en móvil NO ocultar imágenes; reducir y reubicar */
     @media (max-width: 900px){
       body{ overflow:auto; }
-      .wrap{ height:auto; min-height:100vh; }
-      .grid{ grid-template-columns: 1fr; }
-      .bear, .decor{ display:none; }
+      .wrap{ height:auto; min-height:100vh; padding:16px; }
+      .grid{ grid-template-columns: 1fr; padding:16px; gap:14px; }
+
+      /* mostrar */
+      .bear, .decor{
+        display:block;
+        position:absolute;
+        pointer-events:none;
+        z-index:2;
+        opacity:.98;
+        filter: drop-shadow(0 14px 30px rgba(0,0,0,.18));
+      }
+
+      /* tamaños móviles */
+      .bear{
+        width: clamp(90px, 22vw, 140px);
+        bottom: -18px;
+      }
+      .decor{
+        width: clamp(70px, 18vw, 110px);
+        top: -28px;
+      }
+
+      /* dentro de pantalla */
+      .bear-left{ left: 6px; transform: rotate(-6deg); }
+      .bear-right{ right: 6px; transform: rotate(6deg); }
+      .decor-left{ left: 10px; transform: rotate(-10deg); }
+      .decor-right{ right: 10px; transform: rotate(10deg); }
     }
   </style>
 </head>
@@ -440,7 +465,7 @@
 
   <div class="wrap">
     <div class="card">
-      <!-- Imágenes (asegúrate de tener /imagenes/ en la raíz del repo) -->
+      <!-- Imágenes (carpeta imagenes/) -->
       <img class="bear bear-left" src="imagenes/imagen1.png" alt="Osito tierno izquierdo">
       <img class="bear bear-right" src="imagenes/imagen2.png" alt="Osito tierno derecho">
       <img class="decor decor-left" src="imagenes/imagen3.png" alt="Decoración romántica izquierda">
@@ -503,9 +528,8 @@
               <span class="pill" id="songName">Canción: music.mp3</span>
             </div>
 
-            <!-- AUDIO MP3 (ruta segura GitHub Pages) -->
-            <audio id="bgm" preload="auto" loop playsinline>
-              <source src="./music.mp3" type="audio/mpeg">
+            <audio id="bgm" preload="auto" loop>
+              <source src="music.mp3" type="audio/mpeg">
               Tu navegador no soporta audio HTML5.
             </audio>
 
@@ -531,7 +555,7 @@
       <p>1) En la misma carpeta donde está <code>index.html</code>, coloca tu canción.</p>
       <p>2) Renómbrala como <code>music.mp3</code> (o cambia el nombre en el código).</p>
       <p>3) Línea clave:</p>
-      <p><code>&lt;source src="./music.mp3" type="audio/mpeg"&gt;</code></p>
+      <p><code>&lt;source src="music.mp3" type="audio/mpeg"&gt;</code></p>
       <p>4) Abre el archivo en el navegador o usa <b>Live Server</b> en VS Code.</p>
       <p style="opacity:.9">Nota: algunos navegadores no permiten autoplay con sonido hasta que el usuario haga clic.</p>
     </div>
@@ -631,7 +655,6 @@
       headline.textContent = "Ok… entonces déjame decirte algo más:";
       mainMsg.textContent = pick;
 
-      // ACTIVAR MODO “NO” (ROJO)
       quoteBox.classList.add("noMode");
 
       addLog("Ella dijo “No” 😅 → Yo: " + pick);
@@ -641,7 +664,6 @@
 
       if(tries >= 2) dodgeNoButton();
 
-      // Resaltar el botón Sí para “invitarla” a aceptarlo
       if(tries >= 2) yesBtn.classList.add("glow");
       if(tries >= 5) yesBtn.style.transform = "scale(1.14)";
     });
@@ -651,7 +673,6 @@
       headline.textContent = "🥰 Gracias por decir que sí";
       mainMsg.textContent = phrase;
 
-      // Quitar modo rojo y volver al romántico
       quoteBox.classList.remove("noMode");
 
       addLog("Ella dijo “Sí” 💖 → " + phrase);
@@ -661,9 +682,8 @@
 
       burst();
 
-      // Reproducir música al aceptar (con manejo de error)
-      try { await playMusic("Reproduciendo música 💖"); }
-      catch(e) {}
+      const bgm = document.getElementById("bgm");
+      try{ await bgm.play(); }catch(e){}
     });
 
     function burst(){
@@ -681,42 +701,16 @@
       }
     }
 
-    // Música MP3 (Play / Pause) + verificación
+    // Música MP3 (Play / Pause)
     const bgm = document.getElementById("bgm");
     const playBtn = document.getElementById("playBtn");
     const pauseBtn = document.getElementById("pauseBtn");
 
-    async function playMusic(okMsg){
-      bgm.volume = 0.7;
-      try{
-        await bgm.play();
-        if(okMsg) addLog(okMsg);
-        return true;
-      }catch(err){
-        addLog("⚠️ El navegador bloqueó el audio. Toca Play otra vez (o toca la pantalla) y volverá a sonar.");
-        console.log(err);
-        throw err;
-      }
-    }
-
     playBtn.addEventListener("click", async () => {
-      await playMusic("🎶 Música activada");
+      try{ await bgm.play(); }
+      catch(e){ addLog("⚠️ Tu navegador bloqueó el autoplay. Presiona Play otra vez o interactúa con la página."); }
     });
-
-    pauseBtn.addEventListener("click", () => {
-      bgm.pause();
-      addLog("⏸️ Música pausada");
-    });
-
-    // Verificar si el mp3 existe en GitHub Pages (evita “no lo lee”)
-    window.addEventListener("load", async () => {
-      try{
-        const res = await fetch("./music.mp3", { cache: "no-store" });
-        if(!res.ok) throw new Error("HTTP " + res.status);
-      }catch(e){
-        addLog("❌ No se encontró el archivo ./music.mp3 en GitHub Pages. Revisa que 'music.mp3' esté en la raíz del repo y el nombre sea exactamente igual.");
-      }
-    });
+    pauseBtn.addEventListener("click", () => bgm.pause());
 
     // Modal
     const modal = document.getElementById("modal");
@@ -728,4 +722,3 @@
   </script>
 </body>
 </html>
-
