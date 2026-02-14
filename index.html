@@ -440,7 +440,7 @@
 
   <div class="wrap">
     <div class="card">
-      <!-- Imágenes -->
+      <!-- Imágenes (asegúrate de tener /imagenes/ en la raíz del repo) -->
       <img class="bear bear-left" src="imagenes/imagen1.png" alt="Osito tierno izquierdo">
       <img class="bear bear-right" src="imagenes/imagen2.png" alt="Osito tierno derecho">
       <img class="decor decor-left" src="imagenes/imagen3.png" alt="Decoración romántica izquierda">
@@ -503,9 +503,9 @@
               <span class="pill" id="songName">Canción: music.mp3</span>
             </div>
 
-            <!-- AUDIO MP3 (archivo local) -->
-            <audio id="bgm" preload="auto" loop>
-              <source src="music.mp3" type="audio/mpeg">
+            <!-- AUDIO MP3 (ruta segura GitHub Pages) -->
+            <audio id="bgm" preload="auto" loop playsinline>
+              <source src="./music.mp3" type="audio/mpeg">
               Tu navegador no soporta audio HTML5.
             </audio>
 
@@ -531,7 +531,7 @@
       <p>1) En la misma carpeta donde está <code>index.html</code>, coloca tu canción.</p>
       <p>2) Renómbrala como <code>music.mp3</code> (o cambia el nombre en el código).</p>
       <p>3) Línea clave:</p>
-      <p><code>&lt;source src="music.mp3" type="audio/mpeg"&gt;</code></p>
+      <p><code>&lt;source src="./music.mp3" type="audio/mpeg"&gt;</code></p>
       <p>4) Abre el archivo en el navegador o usa <b>Live Server</b> en VS Code.</p>
       <p style="opacity:.9">Nota: algunos navegadores no permiten autoplay con sonido hasta que el usuario haga clic.</p>
     </div>
@@ -661,9 +661,9 @@
 
       burst();
 
-      // Reproducir música al aceptar
-      const bgm = document.getElementById("bgm");
-      try{ await bgm.play(); }catch(e){}
+      // Reproducir música al aceptar (con manejo de error)
+      try { await playMusic("Reproduciendo música 💖"); }
+      catch(e) {}
     });
 
     function burst(){
@@ -681,16 +681,42 @@
       }
     }
 
-    // Música MP3 (Play / Pause)
+    // Música MP3 (Play / Pause) + verificación
     const bgm = document.getElementById("bgm");
     const playBtn = document.getElementById("playBtn");
     const pauseBtn = document.getElementById("pauseBtn");
 
+    async function playMusic(okMsg){
+      bgm.volume = 0.7;
+      try{
+        await bgm.play();
+        if(okMsg) addLog(okMsg);
+        return true;
+      }catch(err){
+        addLog("⚠️ El navegador bloqueó el audio. Toca Play otra vez (o toca la pantalla) y volverá a sonar.");
+        console.log(err);
+        throw err;
+      }
+    }
+
     playBtn.addEventListener("click", async () => {
-      try{ await bgm.play(); }
-      catch(e){ addLog("⚠️ Tu navegador bloqueó el autoplay. Presiona Play otra vez o interactúa con la página."); }
+      await playMusic("🎶 Música activada");
     });
-    pauseBtn.addEventListener("click", () => bgm.pause());
+
+    pauseBtn.addEventListener("click", () => {
+      bgm.pause();
+      addLog("⏸️ Música pausada");
+    });
+
+    // Verificar si el mp3 existe en GitHub Pages (evita “no lo lee”)
+    window.addEventListener("load", async () => {
+      try{
+        const res = await fetch("./music.mp3", { cache: "no-store" });
+        if(!res.ok) throw new Error("HTTP " + res.status);
+      }catch(e){
+        addLog("❌ No se encontró el archivo ./music.mp3 en GitHub Pages. Revisa que 'music.mp3' esté en la raíz del repo y el nombre sea exactamente igual.");
+      }
+    });
 
     // Modal
     const modal = document.getElementById("modal");
@@ -702,3 +728,4 @@
   </script>
 </body>
 </html>
+
